@@ -1,0 +1,56 @@
+.TH TASK3 1
+.SH NAME
+task3 \- Process Manager for Task Variant 3
+.SH SYNOPSIS
+.B ./os_project
+(And choose option 2 from the main menu)
+.SH DESCRIPTION
+.B task3
+is a terminal-based Process Manager. It allows the user to inspect running processes, group processes by user, display PIDs, stop and continue processes, and send signals.
+.SH MENU
+.TP
+.B 1
+List all processes in the system.
+.TP
+.B 2
+Group processes according to their user.
+.TP
+.B 3
+Display the PIDs of all processes.
+.TP
+.B 4
+Stop or continue a selected process.
+.TP
+.B 5
+Send a selected signal to a process.
+.TP
+.B 0
+Exit the program.
+.SH SIGNALS
+The program supports common signals including:
+.TP
+.B SIGHUP
+Hang up.
+.TP
+.B SIGINT
+Interrupt.
+.TP
+.B SIGTERM
+Terminate.
+.TP
+.B SIGSTOP
+Stop a process.
+.TP
+.B SIGCONT
+Continue a stopped process.
+.TP
+.B SIGKILL
+Forcefully terminate a process.
+.SH EXAMPLES
+Run the program:
+.B ./os_project
+and navigate to the Process Manager.
+.SH NOTES
+Some signals require appropriate permissions. Do not send SIGKILL or SIGSTOP to critical system processes.
+.SH AUTHOR
+Task Variant 3 Team

@@ -4,11 +4,10 @@
 #include "process.h"
 #include "scheduler.h"
 
-// Dummy function prototypes for Member 2's components
-// These would typically be in input.h or process_manager.h
-extern void run_process_manager_tool();
-extern Process* read_processes_from_terminal(int* count);
-extern Process* read_processes_from_file(const char* filename, int* count);
+#include "input.h"
+
+// External declaration for Process Manager
+extern void run_process_manager_tool(void);
 
 // Helper function to deep copy processes array
 Process* copy_processes(Process* original, int count) {
@@ -75,13 +74,39 @@ void print_simulator_menu() {
 }
 
 void run_simulator_loop() {
-    // Note: In reality, we'd use Member 2's input reading here.
-    // For now, this is a placeholder to show the menu flow.
     int count = 0;
     Process* processes = NULL; 
 
-    // Placeholder: get processes somehow...
-    // processes = read_processes_from_terminal(&count);
+    int input_choice;
+    printf("\n--- Load Processes ---\n");
+    printf("1. Enter processes interactively\n");
+    printf("2. Read from file\n");
+    printf("Choose: ");
+    if (scanf("%d", &input_choice) == 1) {
+        if (input_choice == 1) {
+            processes = read_processes_from_terminal(&count);
+        } else if (input_choice == 2) {
+            char filename[256];
+            printf("Enter filename: ");
+            scanf("%255s", filename);
+            processes = read_processes_from_file(filename, &count);
+        } else {
+            printf("Invalid choice. Returning to Main Menu...\n");
+            return;
+        }
+    } else {
+        while(getchar() != '\n'); // clear buffer
+        printf("Invalid input. Returning to Main Menu...\n");
+        return;
+    }
+
+    if (processes != NULL && count > 0) {
+        printf("\nProcesses loaded successfully:\n");
+        print_processes(processes, count);
+    } else {
+        printf("\nFailed to load processes. Returning to Main Menu...\n");
+        return;
+    }
     
     int choice;
     do {
@@ -157,7 +182,7 @@ int main() {
                 break;
             case 2:
                 printf("\n[Launching Process Manager]\n");
-                // run_process_manager_tool(); // Implemented by Member 2
+                run_process_manager_tool();
                 break;
             case 3:
                 printf("Exiting... Goodbye!\n");
