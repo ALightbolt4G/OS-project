@@ -60,73 +60,96 @@ static int read_process_info(int pid, SystemProcess *p) {
     return 1;
 }
 
-static int load_processes(SystemProcess processes[], int max_processes) {
+static int compare_by_user(const void *a, const void *b) {
+    const SystemProcess *pa = (const SystemProcess *)a;
+    const SystemProcess *pb = (const SystemProcess *)b;
+    return strcmp(pa->user, pb->user);
+}
+
+static SystemProcess* load_processes(int *count) {
     DIR *dir;
     struct dirent *entry;
-    int count = 0;
+    int capacity = 1024;
+    *count = 0;
+    
+    SystemProcess *processes = (SystemProcess*)malloc(sizeof(SystemProcess) * capacity);
+    if (!processes) {
+        perror("Failed to allocate memory");
+        return NULL;
+    }
     
     dir = opendir(PROC_PATH);
     if (dir == NULL) {
         perror("Cannot open /proc");
-        return 0;
+        free(processes);
+        return NULL;
     }
     
     while ((entry = readdir(dir)) != NULL) {
         if (!is_number(entry->d_name)) continue;
-        if (count >= max_processes) break;
+        
+        if (*count >= capacity) {
+            capacity *= 2;
+            SystemProcess *temp = (SystemProcess*)realloc(processes, sizeof(SystemProcess) * capacity);
+            if (!temp) {
+                perror("Failed to reallocate memory");
+                break; // Stop loading but return what we have
+            }
+            processes = temp;
+        }
         
         int pid = atoi(entry->d_name);
-        if (read_process_info(pid, &processes[count])) {
-            count++;
+        if (read_process_info(pid, &processes[*count])) {
+            (*count)++;
         }
     }
     closedir(dir);
-    return count;
+    return processes;
 }
 
 static void list_processes(void) {
-    SystemProcess processes[4096];
-    int count = load_processes(processes, 4096);
+    int count = 0;
+    SystemProcess* processes = load_processes(&count);
+    if (!processes) return;
+    
     printf("\n%-8s %-20s %-8s %-30s\n", "PID", "USER", "STATE", "NAME");
     printf("-----------------------------------------------------------------\n");
     for (int i = 0; i < count; i++) {
         printf("%-8d %-20s %-8c %-30s\n", processes[i].pid, processes[i].user, processes[i].state, processes[i].name);
     }
     printf("\nTotal processes: %d\n", count);
+    free(processes);
 }
 
 static void group_by_user(void) {
-    SystemProcess processes[4096];
-    int count = load_processes(processes, 4096);
+    int count = 0;
+    SystemProcess* processes = load_processes(&count);
+    if (!processes) return;
+    
+    qsort(processes, count, sizeof(SystemProcess), compare_by_user);
+    
     printf("\n========== Processes Grouped By User ==========\n");
     for (int i = 0; i < count; i++) {
-        int already_printed = 0;
-        for (int j = 0; j < i; j++) {
-            if (strcmp(processes[i].user, processes[j].user) == 0) {
-                already_printed = 1;
-                break;
-            }
+        if (i == 0 || strcmp(processes[i].user, processes[i-1].user) != 0) {
+            printf("\nUSER: %s\n", processes[i].user);
+            printf("-----------------------------\n");
         }
-        if (already_printed) continue;
-        
-        printf("\nUSER: %s\n", processes[i].user);
-        printf("-----------------------------\n");
-        for (int j = 0; j < count; j++) {
-            if (strcmp(processes[i].user, processes[j].user) == 0) {
-                printf("PID: %-8d NAME: %s\n", processes[j].pid, processes[j].name);
-            }
-        }
+        printf("PID: %-8d NAME: %s\n", processes[i].pid, processes[i].name);
     }
+    free(processes);
 }
 
 static void show_pids(void) {
-    SystemProcess processes[4096];
-    int count = load_processes(processes, 4096);
+    int count = 0;
+    SystemProcess* processes = load_processes(&count);
+    if (!processes) return;
+    
     printf("\nPIDs:\n");
     for (int i = 0; i < count; i++) {
         printf("%d ", processes[i].pid);
     }
     printf("\n");
+    free(processes);
 }
 
 static void run_stop_process(void) {

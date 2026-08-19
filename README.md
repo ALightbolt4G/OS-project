@@ -145,4 +145,5 @@ void simulate_srtf(Process* processes, int count) {
 ### Member 2: Input & Process Manager (Integrated)
 - **`input.c` / `input.h`**: Implements `read_processes_from_terminal` and `read_processes_from_file`. Both functions dynamically allocate an array of `Process` structs using the shared definition in `process.h` and return the array size via a pointer. They also handle data validation and initialize core fields (like `remaining_time` and `state`).
 - **`process_manager.c`**: Implements the Task Variant 3 Process Manager. It parses `/proc` to list and group running processes, and uses `kill()` to send signals (like `SIGSTOP`, `SIGCONT`). Exposed via `run_process_manager_tool()`.
+  - **Optimizations Applied:** Replaced hardcoded stack arrays with dynamic `malloc`/`realloc` to prevent stack overflow. Refactored `group_by_user` to use `qsort`, improving grouping performance from $O(N^2)$ to $O(N \log N)$.
 - **`task3.1`**: Manual page for the Process Manager.
